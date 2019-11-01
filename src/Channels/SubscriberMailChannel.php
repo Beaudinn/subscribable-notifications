@@ -23,6 +23,7 @@ class SubscriberMailChannel extends MailChannel
      */
     public function send($notifiable, Notification $notification)
     {
+
         // Check if the user would want the mail
         if ($notifiable instanceof CheckSubscriptionStatusBeforeSendingNotifications &&
             $notification instanceof CheckNotifiableSubscriptionStatus &&
@@ -31,16 +32,28 @@ class SubscriberMailChannel extends MailChannel
             return;
         }
 
+
         $message = $notification->toMail($notifiable);
 
         // Inject unsubscribe links for rendering in the view
+
         if ($notifiable instanceof CanUnsubscribe && $message instanceof MailMessage) {
             if ($notification instanceof AppliesToMailingList) {
+
                 $message->viewData['unsubscribeLink'] = $notifiable->unsubscribeLink(
                     $notification->usesMailingList()
                 );
             }
             $message->viewData['unsubscribeLinkForAll'] = $notifiable->unsubscribeLink();
+        }elseif($notifiable instanceof CanUnsubscribe){
+            if ($notification instanceof AppliesToMailingList) {
+
+                $message->with('unsubscribeLink', $notifiable->unsubscribeLink(
+                    $notification->usesMailingList()
+                ));
+            }
+
+            $message->with('unsubscribeLinkForAll',  $notifiable->unsubscribeLink());
         }
 
         if (! $notifiable->routeNotificationFor('mail', $notification) &&
